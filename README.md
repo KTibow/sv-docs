@@ -11,7 +11,7 @@ There are two app generations with different APIs, both currently on the app sto
 
 ### Which one do I use?
 
-Whichever app your school makes you use — these days that's usually **StudentVUE (New)**. If you're on the old app, [SOAP-API.md](SOAP-API.md) is your doc. If you're on StudentVUE (New), everything goes through the [JSON API](JSON-API.md); its SOAP is only used for boot-time configuration, activation, and forgot-password. The legacy SOAP student-data methods (gradebook, messages, calendar, …) were shut off server-side — that's the outage that broke old-era clients — so new work should target [JSON-API.md](JSON-API.md).
+Whichever app your school makes you use — these days that's usually **StudentVUE (New)**. If you're on the old app, use [SOAP-API.md](SOAP-API.md).
 
 ### Shared concepts
 
