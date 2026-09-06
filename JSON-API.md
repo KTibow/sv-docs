@@ -81,7 +81,7 @@ User-Agent: ksoap
 AppNameOSAndVersion: StudentVUE|Android|1.9.16
 Authorization: Basic <base64(userID:password)>
 
-{"arguments":{"request":"{\"userID\":null,\"password\":null,\"userType\":\"Student\",\"token\":null,\"solu\":null,\"decode\":null}"}}
+{"arguments":{"request":"{\"userID\":null,\"password\":null,\"userType\":\"Student\"}"}}
 ```
 
 **Example Response:**
@@ -99,7 +99,7 @@ Authorization: Basic <base64(userID:password)>
 
 - Credentials travel in the `Authorization: Basic` header only; the app nulls `userID`/`password` in the body. Both placements are accepted server-side, but header-only is what the app does.
 - `userType` is `"Student"` for StudentVUE (`"parent"` on ParentVUE).
-- `token`, `solu`, `decode` are only used for SAML/SSO re-entry; `null` on a plain login.
+- `token`, `solu`, `decode` are only used for SAML/SSO re-entry; absent on a plain login.
 - The login/refresh responses are a bare token object with **no `error` and no `data` key** — a different envelope than every other call. `expires_in`, `token_type`, `scope` were `null` on every observation; nothing about token expiry can be determined client-side.
 - A failed login returns the ordinary error envelope, still with HTTP 200.
 
