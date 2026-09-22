@@ -377,6 +377,8 @@ All of these are JSON-API calls: `POST /api/v1/mobile/PXPWebServices/<Method>`. 
 
 #### Child list
 
+**`GetChildListData`:**
+
 ```json
 {"arguments":{"request":"{\"legacyAppRequest\":false,\"secondaryLogin\":false}"}}
 ```
@@ -402,6 +404,8 @@ The `allModules` list is the district's enabled modules â€” useful to decide whi
 Child selection is a parameter (`childIntID`), not a stateful step â€” there is no "select child" call. `0` is the logged-in student on StudentVUE. Don't confuse `childIntID` (request ordinal) with `studentGU` (response GUID).
 
 #### Class schedule
+
+**`StudentClassList`:**
 
 ```json
 {"arguments":{"request":"{\"childIntID\":0,\"loadAllTerms\":true,\"conSchOrgYearGU\":\"\",\"conSchTermIndex\":\"-1\",\"termIndex\":\"-1\"}"}}
@@ -475,6 +479,8 @@ Reproducibly `attendance: null, schools: []` mid-class on a regular school day â
 
 #### Current class
 
+**`GetStudentClassTime`:**
+
 ```json
 {"arguments":{"request":"{\"childIntID\":0}"}}
 ```
@@ -495,6 +501,8 @@ Reproducibly `attendance: null, schools: []` mid-class on a regular school day â
 Outside school hours every class field is `null` and `resultCode` != 0 (4 = nothing found) with a message in `currentClass`, e.g. `"For the current day, no Schedule Information was found for the selected student."`
 
 #### Gradebook
+
+**`Gradebook`:**
 
 ```json
 {"arguments":{"request":"{\"reportPeriod\":\"\",\"concurrentSchOrgYearGU\":\"\",\"childIntID\":0,\"languageCode\":\"en\"}"}}
@@ -551,6 +559,8 @@ If a mark has no weighted categories `gradeCalculationSummary` is a list with ju
 
 #### Attendance
 
+**`GetStudentAttendanceList`:**
+
 ```json
 {"arguments":{"request":"{\"childIntID\":0}"}}
 ```
@@ -577,12 +587,16 @@ Whole-year history is a separate call, `GetStudentPastAttendanceData` (response 
 
 #### Student info
 
+**`GetStudentInfoData`:**
+
 ```json
 {"arguments":{"request":"{\"childIntID\":0}"}}
 ```
 â†’ `data.studentInfoXML` (photo, schedule summary) and `data.studentInfoDetailXML` â€” demographics, contacts, guardian info. Both are JSON objects despite the `XML` names. Contains PII.
 
 #### Calendar
+
+**`GetCalendarData`:**
 
 ```json
 {"arguments":{"request":"{\"childIntID\":0}"}}
@@ -663,6 +677,8 @@ Note `documentFileName` is a server-side GUID-named file, not the human title â€
 
 #### Homework / class notes
 
+**`GetStudentHWNotes`:**
+
 ```json
 {"arguments":{"request":"{\"childIntID\":0,\"gu\":\"\"}"}}
 ```
@@ -674,6 +690,8 @@ Note `documentFileName` is a server-side GUID-named file, not the human title â€
 `gu` selects a section (GUID from the schedule); empty returns the container only. Writing is `UpdateStudentHWNotes` with `gbhwNotesUpdateData`.
 
 #### Messages
+
+**`GetPXPContentMessage`:**
 
 ```json
 {"arguments":{"request":"{\"childIntID\":0}"}}
@@ -698,6 +716,8 @@ Note `documentFileName` is a server-side GUID-named file, not the human title â€
 District/school alert messages. `messageListings` is the legacy shape (empty here); live messages arrive under `synergyMailMessageListingByStudents[]`, grouped per student. `module` identifies the emitting module (`7` = gradebook progress-report notices, `1` = attendance notes). `ID`/`from`/`content` can all be `null` for auto-generated notices. Replaces the SOAP `GetPXPMessages`; message attachments are fetched through the mail family below.
 
 #### School information
+
+**`GetSchoolInformationData`:**
 
 ```json
 {"arguments":{"request":"{\"childIntID\":0}"}}
@@ -729,6 +749,8 @@ A full staff directory â€” hundreds of entries at a large school, all teachers i
 
 #### Acknowledgements
 
+**`GetAcknowledgementsData`:**
+
 ```json
 {"arguments":{"request":"{\"childIntID\":0}"}}
 ```
@@ -740,6 +762,8 @@ A full staff directory â€” hundreds of entries at a large school, all teachers i
 Empty outside signature windows.
 
 #### Hall pass setup
+
+**`GetHallPassSetup`:**
 
 ```json
 {"arguments":{"request":"{\"childIntID\":0}"}}
@@ -754,7 +778,7 @@ Returned even where `GetHallPassData` fails with the generic `500` error; empty 
 
 #### Student mail (Synergy Mail)
 
-The whole mail stack is a `GetSynergyMail*` / `UpdateSynergyMail*` family (see the [Method catalog](#method-catalog)). Inbox paging:
+The whole mail stack is a `GetSynergyMail*` / `UpdateSynergyMail*` family (see the [Method catalog](#method-catalog)). Inbox paging: **`GetSynergyMailGetConversations`:**
 
 ```json
 {"arguments":{"request":"{\"pageToLoad\":0}"}}
