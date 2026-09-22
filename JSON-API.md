@@ -438,18 +438,9 @@ The single-term response also carries **`todayScheduleInfoData`** — see [Today
 
 #### Today's classes
 
-```json
-{"arguments":{"request":"{\"childIntID\":0,\"schDate\":\"MM/DD/YYYY\",\"dayType\":0}"}}
-```
-→ `data.todayScheduleInfo`:
-```json
-{"date": "M/D/YYYY", "dateToLoad": "YYYY-MM-DDT00:00:00-07:00",
- "attendance": null, "schools": []}
-```
+Today's bell-time schedule comes from two places, and they are not equivalent.
 
-Both `GetStudentClasesForGivenDay` and `GetStudentClasesForGivenDayResponse` exist; the app calls the `Response`-suffixed name. `dayType` distinguishes normal/alternate (flex) schedules. Mid-class on a regular school day this still comes back with `attendance: null, schools: []` — reproducible across both method names, both `dayType` values, and arbitrary `schDate` values (the response always echoes the current day, so `schDate` appears to be ignored). Treat empty `schools` as "no data", not "no school". The `date` fields use `M/D/YYYY` (no zero-padding), while `dateToLoad` is ISO-8601 with the local UTC offset.
-
-The usable, fully populated shape for the same day is **`todayScheduleInfoData`** inside the single-term `StudentClassList` response — prefer that source for bell times:
+**`StudentClassList` with `loadAllTerms: false`** — the single-term response (see [Class schedule](#class-schedule)) includes **`todayScheduleInfoData`**, the populated shape:
 
 ```json
 {"todayScheduleInfoData": {"date": "M/D/YYYY", "schoolInfos": [
@@ -467,7 +458,20 @@ The usable, fully populated shape for the same day is **`todayScheduleInfoData`*
    ]}]}}
 ```
 
-`teacherURL` is an HTML fragment embedding JavaScript `SMApp.composeEx({to: [{RecipientList: 0, GU: "<GUID>"}], subject: "…", messageText: ""})` calls for Synergy Mail compose — `staffGU`/`emailSubject` carry the same data in usable form.
+`teacherURL` is an HTML fragment embedding JavaScript `SMApp.composeEx({to: [{RecipientList: 0, GU: "<GUID>"}], subject: "…", messageText: ""})` calls for Synergy Mail compose — `staffGU`/`emailSubject` carry the same data in usable form. Use this as the source for bell times.
+
+**`GetStudentClasesForGivenDay` / `GetStudentClasesForGivenDayResponse`** — dedicated standalone calls (the app calls the `Response`-suffixed name):
+
+```json
+{"arguments":{"request":"{\"childIntID\":0,\"schDate\":\"MM/DD/YYYY\",\"dayType\":0}"}}
+```
+→ `data.todayScheduleInfo`:
+```json
+{"date": "M/D/YYYY", "dateToLoad": "YYYY-MM-DDT00:00:00-07:00",
+ "attendance": null, "schools": []}
+```
+
+Reproducibly `attendance: null, schools: []` mid-class on a regular school day — across both method names, both `dayType` values (normal/alternate flex schedules), and arbitrary `schDate` values; the response always echoes the current day, so `schDate` appears to be ignored. Treat empty `schools` as "no data", not "no school". The `date` fields use `M/D/YYYY` (no zero-padding), while `dateToLoad` is ISO-8601 with the local UTC offset.
 
 #### Current class
 
