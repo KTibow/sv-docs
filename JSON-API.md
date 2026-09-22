@@ -175,11 +175,31 @@ Every call returns **HTTP 200, even on failure**. Check the body's `error` field
 }
 ```
 
+**Example Response (module disabled district-wide):**
+```json
+{
+  "error": {"code": "400",
+            "message": "2100 - School District has not enabled access for the Fees Module.",
+            "stackTrace": null},
+  "data": null
+}
+```
+
+**Example Response (server-side failure with a support ID):**
+```json
+{
+  "error": {"code": "500",
+            "message": "Error:  Please contact your school office for assistance. (ID: XXXXX)",
+            "stackTrace": null},
+  "data": null
+}
+```
+
 **Notes:**
 
 - `code "2100"` — the feature is not enabled at this school; treat as empty data, not as a failure.
-- `code "400"` — e.g. past attendance not available for this school.
-- `code "500"` — generic server error.
+- `code "400"` — e.g. past attendance not available for this school, or a module the district has disabled; the message often embeds a `2100 -` prefix even though the code is `400`.
+- `code "500"` — generic server error. The `(ID: XXXXX)` suffix is a server-side event ID for the district's support desk; it varies per failure. Some `GetSynergyMail*` calls return this at districts even when `pxpMessagesData.supportingSynergyMail` is `true`.
 - Don't treat unseen codes as benign; log them.
 - This matters most for rarely-used areas (documents especially), where an empty result and an error look identical if you only check `data`.
 
@@ -281,7 +301,7 @@ All of these are JSON-API calls: `POST /api/v1/mobile/PXPWebServices/<Method>`. 
 | `GetStudentPastAttendanceData` | `childIntID` | `reportPastAtteendanceXML` *(sic)* | ✅ |
 | `GetStudentInfoData` | `childIntID` | `studentInfoXML`, `studentInfoDetailXML` | ✅ |
 | `GetCalendarData` | `childIntID`, optional date-window fields | `calendarListingData` | ✅ |
-| `GetCalendarAssignmentDetails` | assignment GUID fields | `calendarAssignmentDetails` | ◦ |
+| `GetCalendarAssignmentDetails` | calendar event fields (`AGU`, `DGU`, `dguInternal`, `dgU2`, `viewType`, `addLinkData`, `dayType`) | `calendarAssignmentDetails` | ✅ |
 | `GetStudentDocuments` | `childIntID`, `languageCode` | `studentDocuments` | ✅ |
 | `GetStudentDocumentContent` | `childIntID`, `documentGU` | `studentAttachedDocumentData` (base64 PDF inline) | ◦ |
 | `GetStudentHWNotes` | `childIntID`, `gu` | `gbhwNotesDatas` | ✅ |
@@ -291,20 +311,20 @@ All of these are JSON-API calls: `POST /api/v1/mobile/PXPWebServices/<Method>`. 
 | `GetUserDefinedModule` | `childIntID`, `moduleIndex` | `allModuleRecordData` | ✅ |
 | `GetFlexScheduleData` | `childIntID`, date fields | `studentFlexScheduleListingXML` | ◦ |
 | `UpdateFlexSchedule` | `removeStudentFromSection=false`, section fields | — | ◦ |
-| `GetSchoolInformationData` | `childIntID` | `studentSchoolInfoListing` | ◦ |
+| `GetSchoolInformationData` | `childIntID` | `studentSchoolInfoListing` | ✅ |
 | `GetSchoolPayUrl` | — | payment-portal URL | ◦ |
 | `GetSchoologoResponse` | *(none)* | `schoolAndDistrictLogo` (base64 images) | ✅ |
 | `GetSoundFile` / `SaveSoundFile` | sound id / data | `soundFileData` | ◦ |
 | `GenerateAuthToken` | *(session)* | `authToken` (SSO token for portal web-views) | ◦ |
 | `GetAckData` | `processActivation=false` | `acctResult`, `ackStatmentData`, `parentOrStudentData` | ◦ |
-| `GetAcknowledgementsData` | `childIntID` | `parentAcknowledgementMain` | ◦ |
+| `GetAcknowledgementsData` | `childIntID` | `parentAcknowledgementMain` | ✅ |
 | `GetAcknowledgementDetailsMobile` | acknowledgement id | `acknowledgement` | ◦ |
 | `UpdateAckFromMyAccount` / `UpdateParentAcknowledgement` | `ackUpdateListing` | — | ◦ |
 | `UpdateEmergencyResponse` | emergency contact answers | — | ◦ |
 | `UpdateStudentAbsence` | `absenceReportListings`, `absenceReportPastList`, `reportingOption` | `requestResult` | ◦ |
 | `UpdateAttachPhotoResponse` | `photoAttachDocumentData` | — | ◦ |
 | `UpdateMyAccountData` | `pxpMobileUpdateMyAccountData` | — | ◦ |
-| `GetContentMyAccountData` | `childIntID` | `pxpMyAccountData` | ◦ |
+| `GetContentMyAccountData` | `childIntID` | `pxpMyAccountData` | ✅ |
 | `GetStudentDisciplineData` | `childIntID` | `studentDisciplineListing` | ◦ |
 | `GetStudentFeeData` | `childIntID` | `studentFeeData` | ◦ |
 | `GetStudentSpecialEdData` | `childIntID` | `specialEdData` | ◦ |
@@ -313,7 +333,7 @@ All of these are JSON-API calls: `POST /api/v1/mobile/PXPWebServices/<Method>`. 
 | `GetStudentsVideoMeeting` / `GetParentsVideoMeeting` | meeting fields | `meetingsForUserResponse`, `videoCallResponseModel` | ◦ |
 | `GetHallPassData` | `getOnlyScheduedPases=false` *(sic)* | `studentHallPassXML` | ◦ |
 | `GetHallPassHistory` | `onlyOverTimeLimit=false` | `passesData`, `statsData`, `summaryData` | ◦ |
-| `GetHallPassSetup` | `childIntID` | `hallPassRoomSetupXML` | ◦ |
+| `GetHallPassSetup` | `childIntID` | `hallPassRoomSetupXML` | ✅ |
 | `UpdateHallPass` | pass action fields | `studentHallPassXML` | ◦ |
 | `GetHealthData` | `getDatahealthConditions=false`, `getDatahealthImmunizations=false`, `getDatahealthVisits=false` | `studentHealthData` | ◦ |
 | `GetCounselorVisitBasicData` | `getPositionInLine=false` | `counselorVisiNthInLine` | ◦ |
@@ -328,13 +348,13 @@ All of these are JSON-API calls: `POST /api/v1/mobile/PXPWebServices/<Method>`. 
 | `UploadGBDocumentDataForStudentAssigment` | `gbDocumentDataObj` | — | ◦ |
 | `UpdateDeviceToken` | push token, `reactNativeApp=false` | — (registers device for push) | ◦ |
 | `UpdateNotificationPrefs` | `mobileUserSettings`, `notificationListing` | — | ◦ |
-| `TestSystemCall` | *(none)* | connectivity smoke test | ◦ |
+| `TestSystemCall` | *(none)* | connectivity smoke test (`data` is a bool) | ✅ |
 | `GetSynergyMailGetConversations` | `pageToLoad=0` | `conversations`, `isLastPageLoaded`, `totalUnreadConversationMessages` | ◦ |
 | `GetSynergyMailMessage` | message id fields | `synergyMailDataXML` | ◦ |
 | `GetSynergyMailIGetMessageBody` | message id fields | `synergyMailMessageBodyXML` | ◦ |
 | `GetSynergyMailGetAttachment` | attachment id fields | `attachmentXML` | ◦ |
 | `GetSynergyMailInboxCount` | folder fields | `synergyMailInboxCountXML` | ◦ |
-| `GetSynergyMailUnreadCount` | — | `messageCount` | ◦ |
+| `GetSynergyMailUnreadCount` | — | `messageCount` | ✅ |
 | `GetSynergyMailGetContactList` | — | `contactGroupList` | ◦ |
 | `GetSynergyMailGetSchoolList` | — | `organizationList` | ◦ |
 | `GetSynergyMailGetStaffList` | — | `organizationStaffList` | ◦ |
@@ -362,10 +382,22 @@ All of these are JSON-API calls: `POST /api/v1/mobile/PXPWebServices/<Method>`. 
 ```
 →
 ```json
-{"error": null, "data": {"children": {"childInfos": [
-  {"childIntID": 0, "studentGU": "<GUID>", "name": "<Student Name>", "schoolName": "<School Name>", "...": "..."}
-]}}}
+{"error": null, "data": {"children": {
+  "childInfos": [
+    {"childIntID": 0, "studentGU": "<GUID>", "name": "<Student Name>", "schoolName": "<School Name>", "...": "..."}
+  ],
+  "allModules": [
+    {"name": "Synergy Mail", "module": "21", "isEnabled": "Y",
+     "iconUrl": "Images/PXP/ModuleIcons/icon_Messages.png", "moduleUrl": "PXP2_Messages.aspx", "moduleOrder": 0.0,
+     "pxpModuleCfgGU": null, "organizationYearGU": null},
+    {"name": "Attendance", "module": "0", "isEnabled": "Y",
+     "iconUrl": "Images/PXP/ModuleIcons/icon_Attendance.png", "moduleUrl": "PXP2_Attendance.aspx", "moduleOrder": 5.0,
+     "pxpModuleCfgGU": "<GUID>", "organizationYearGU": ""},
+    {"name": "Grade Book", "module": "7", "isEnabled": "Y", "...": "..."}
+  ]}}}
 ```
+
+The `allModules` list is the district's enabled modules — useful to decide which calls to attempt.
 
 Child selection is a parameter (`childIntID`), not a stateful step — there is no "select child" call. `0` is the logged-in student on StudentVUE. Don't confuse `childIntID` (request ordinal) with `studentGU` (response GUID).
 
@@ -402,21 +434,40 @@ Child selection is a parameter (`childIntID`), not a stateful step — there is 
 
 With `loadAllTerms: true` classes live under `studentClassScheduleForAllTerms.studentClassScheduleForTerms[].classLists[]`; the single-term mode (`loadAllTerms: false`) returns a flat `classLists` under `studentClassSchedule`. Handle both. `orgYearGU` here is the value `Gradebook` wants as `concurrentSchOrgYearGU`.
 
+The single-term response also carries **`todayScheduleInfoData`** — see [Today's classes](#todays-classes) for the populated shape.
+
 #### Today's classes
 
 ```json
 {"arguments":{"request":"{\"childIntID\":0,\"schDate\":\"MM/DD/YYYY\",\"dayType\":0}"}}
 ```
-→ `data.todayScheduleInfo` (trimmed):
+→ `data.todayScheduleInfo`:
 ```json
-{
-  "date": "MM/DD/YYYY",
-  "attendance": {"...": "..."},
-  "schools": [{"schoolName": "<School Name>", "...": "..."}]
-}
+{"date": "M/D/YYYY", "dateToLoad": "YYYY-MM-DDT00:00:00-07:00",
+ "attendance": null, "schools": []}
 ```
 
-Both `GetStudentClasesForGivenDay` and `GetStudentClasesForGivenDayResponse` exist; the app calls the `Response`-suffixed name. Class rows here follow the `schools[]` shape rather than the flat `classLists`. `dayType` distinguishes normal/alternate (flex) schedules.
+Both `GetStudentClasesForGivenDay` and `GetStudentClasesForGivenDayResponse` exist; the app calls the `Response`-suffixed name. `dayType` distinguishes normal/alternate (flex) schedules. Mid-class on a regular school day this still comes back with `attendance: null, schools: []` — reproducible across both method names, both `dayType` values, and arbitrary `schDate` values (the response always echoes the current day, so `schDate` appears to be ignored). Treat empty `schools` as "no data", not "no school". The `date` fields use `M/D/YYYY` (no zero-padding), while `dateToLoad` is ISO-8601 with the local UTC offset.
+
+The usable, fully populated shape for the same day is **`todayScheduleInfoData`** inside the single-term `StudentClassList` response — prefer that source for bell times:
+
+```json
+{"todayScheduleInfoData": {"date": "M/D/YYYY", "schoolInfos": [
+  {"schoolName": "<School Name>", "bellSchedName": "",
+   "classes": [
+     {"period": "NN", "className": "<Course Title> - <Section ID>",
+      "startTime": "H:MM AM", "endTime": "H:MM AM",
+      "startDate": "MM/DD/YYYY H:MM:SS AM", "endDate": "MM/DD/YYYY H:MM:SS AM",
+      "roomName": "<Room>",
+      "teacherName": "<Teacher Name>", "teacherEmail": "<teacher@example.com>",
+      "staffGU": "<GUID>", "sectionGU": "<GUID>",
+      "emailSubject": "RE: Period NN, Section <Section ID>",
+      "teacherURL": "<HTML snippet with SMApp.composeEx(...) mailto handlers>",
+      "classURL": "", "attendanceCode": "", "hideClassStartEndTime": false}
+   ]}]}}
+```
+
+`teacherURL` is an HTML fragment embedding JavaScript `SMApp.composeEx({to: [{RecipientList: 0, GU: "<GUID>"}], subject: "…", messageText: ""})` calls for Synergy Mail compose — `staffGU`/`emailSubject` carry the same data in usable form.
 
 #### Current class
 
@@ -426,15 +477,18 @@ Both `GetStudentClasesForGivenDay` and `GetStudentClasesForGivenDayResponse` exi
 → `data.studentClassNow` (trimmed):
 ```json
 {
-  "period": null, "courseTitle": null, "sectionID": null, "room": null,
-  "staffName": null, "startTime": null, "endtime": null,
-  "minutesRemainingToEndClass": null,
-  "resultCode": 4,
-  "currentClass": "For the current day, no Schedule Information was found for the selected student."
+  "period": "N", "courseTitle": "<Course Title>", "sectionID": "<Section ID>",
+  "room": "<Room>", "staffName": "<Teacher Name>",
+  "startTime": null, "endtime": null,
+  "minutesRemainingToEndClass": "N", "minutesAfterClassStart": "NN",
+  "resultCode": 1,
+  "currentClass": "Period: N,  Course Title: <Course Title>,  Section ID: <Section ID>, Room: <Room>,  Staff Name: <Teacher Name>,  All Day Code: Present"
 }
 ```
 
-Outside school hours the class fields are `null` and `resultCode` != 0 with a message in `currentClass`.
+`currentClass` is a pre-rendered human-readable summary (it embeds today's attendance code); build your own UI from the individual fields, not by parsing it. `startTime`/`endtime` stay `null` even mid-class; the minute counters are strings.
+
+Outside school hours every class field is `null` and `resultCode` != 0 (4 = nothing found) with a message in `currentClass`, e.g. `"For the current day, no Schedule Information was found for the selected student."`
 
 #### Gradebook
 
@@ -453,14 +507,32 @@ Outside school hours the class fields are `null` and `resultCode` != 0 with a me
   "courses": [
     {"period": "1", "title": "<Course Title>", "courseName": "…", "courseID": "…",
      "room": "<Room>", "staff": "<Teacher Name>", "staffEMail": "<teacher@example.com>",
-     "staffGU": "<GUID>", "imageType": null, "usesRichContent": false,
+     "staffGU": "<GUID>", "imageType": null,
+     "highlightPercentageCutOffForProgressBar": 50, "usesRichContent": false,
      "marks": [
-       {"markName": "S1", "shortMarkName": "S1",
-        "calculatedScoreString": "<grade>", "calculatedScoreRaw": "…",
-        "gradeCalculationSummary": {"...": "..."},
-        "assignments": [{"...": "..."}],
-        "assignmentsSinceLastAccess": [],
-        "standardViews": []}
+       {"markName": "S1MT", "shortMarkName": "S1MT",
+        "calculatedScoreString": "<grade>", "calculatedScoreRaw": "88.5",
+        "standardViews": [],
+        "gradeCalculationSummary": [
+          {"type": "Classwork", "weight": "50%", "points": "14.00", "pointsPossible": "14.00",
+           "weightedPct": "50.00%", "calculatedMark": "<grade>"},
+          {"type": "Assessment", "weight": "50%", "points": "0.00", "pointsPossible": "0.00",
+           "weightedPct": "0.00%", "calculatedMark": "0"},
+          {"type": "TOTAL", "weight": "100%", "points": "14.00", "pointsPossible": "14.00",
+           "weightedPct": "100.00%", "calculatedMark": "<grade>"}
+        ],
+        "assignments": [
+          {"gradebookID": 0, "measure": "<Assignment Title>", "type": "Classwork",
+           "date": "M/D/YYYY", "dueDate": "M/D/YYYY",
+           "score": "3", "displayScore": "3 out of 3", "scoreCalValue": "3", "scoreMaxValue": "3",
+           "scoreType": "Raw Score", "points": "3 / 3", "point": "3", "pointPossible": "3",
+           "timeSincePost": "Nd", "totalSecondsSincePost": 200000.0,
+           "notes": "", "measureDescription": "",
+           "teacherID": 0, "studentID": 0,
+           "hasDropBox": false, "dropStartDate": "M/D/YYYY", "dropEndDate": "M/D/YYYY",
+           "resources": [], "standards": []}
+        ],
+        "assignmentsSinceLastAccess": []}
      ]}
   ],
   "standardsGradebook": null
@@ -469,12 +541,35 @@ Outside school hours the class fields are `null` and `resultCode` != 0 with a me
 
 Assignments are inline in `courses[].marks[].assignments[]` — no second fetch. The quarter is a request parameter: valid `reportPeriod` values come from `reportingPeriods[].index`, so a full year takes one call per quarter. `standardsGradebook` is a second mode some districts use. `assignmentsSinceLastAccess` reflects per-account read state tracked by the server.
 
+Field quirks: mark names can be mid-term markers (`S1MT`), not just final-term codes; `calculatedScoreRaw` is a string; `totalSecondsSincePost` is a float; all score fields are duplicated in several forms (`score`/`displayScore`/`points`/`point`…) with `scoreType` distinguishing `Raw Score` from letter/percent grades; `gradebookID` here is the same id the calendar uses as `DGU`. Numeric lookups (`gradebookID`, `teacherID`, `studentID`) are numbers, not strings.
+
+If a mark has no weighted categories `gradeCalculationSummary` is a list with just the `TOTAL` row.
+
 #### Attendance
 
 ```json
 {"arguments":{"request":"{\"childIntID\":0}"}}
 ```
-→ `data` keys `dailyAttendance` and `periodAttendance` (summary/entry objects). Whole-year history is a separate call, `GetStudentPastAttendanceData` (response key `reportPastAtteendanceXML` — Edupoint's spelling); schools that don't expose it return `error.code "400"`.
+→ `data` keys `dailyAttendance` and `periodAttendance` (summary/entry objects). `dailyAttendance` can be `null` with `periodAttendance` carrying everything:
+
+```json
+{"periodAttendance": {
+  "type": "Period", "startPeriod": 0, "endPeriod": NN, "periodCount": NN,
+  "schoolName": "<School Name>",
+  "absences": [
+    {"absenceDate": "MM/DD/YYYY", "reason": "<Reason>", "reason2": null,
+     "note": "<Parent note text>", "dailyIconName": "icon_excused.gif",
+     "codeAllDayReasonType": "icon_excused.gif", "codeAllDayDescription": "<Reason>",
+     "periods": [
+       {"number": "N", "name": "", "note": "", "reason": "",
+        "course": "<Course Title>", "staff": "<Teacher Name>",
+        "staffEMail": "<teacher@example.com>", "iconName": "",
+        "schoolName": "<School Name>", "staffGU": "<GUID>", "orgYearGU": "<GUID>"}
+     ]}
+  ]}}
+```
+
+Whole-year history is a separate call, `GetStudentPastAttendanceData` (response key `reportPastAtteendanceXML` — Edupoint's spelling); schools that don't expose it return `error.code "400"`.
 
 #### Student info
 
@@ -494,14 +589,42 @@ Assignments are inline in `courses[].marks[].assignments[]` — no second fetch.
   "schoolBegDate": "MM/DD/YYYY", "schoolEndDate": "MM/DD/YYYY",
   "monthBegDate": "MM/DD/YYYY", "monthEndDate": "MM/DD/YYYY",
   "eventLists": [
-    {"date": "MM/DD/YYYY", "title": "<Event Title>", "icon": null,
+    {"date": "MM/DD/YYYY", "title": "First Day of the School", "icon": null,
      "AGU": null, "dayType": 0, "startTime": "", "link": null,
-     "DGU": null, "dguInternal": null, "dgU2": null}
+     "DGU": null, "dguInternal": null, "dgU2": null,
+     "viewType": null, "addLinkData": null, "evtDescription": null},
+    {"date": "MM/DD/YYYY", "title": "Holiday", "icon": null,
+     "AGU": null, "dayType": 1, "startTime": "All Day", "link": null,
+     "DGU": null, "dguInternal": null, "dgU2": null,
+     "viewType": null, "addLinkData": null, "evtDescription": null},
+    {"date": "MM/DD/YYYY",
+     "title": "<Teacher Name>  <Course Title>(<period>) : <Assignment Title>  - Score: 100.00",
+     "icon": "assignment.png",
+     "AGU": "0", "dayType": 2, "startTime": "", "link": "ASSIGNMENTS",
+     "DGU": "0", "dguInternal": "0", "dgU2": null,
+     "viewType": "2", "addLinkData": "<GUID>", "evtDescription": null}
   ]
 }
 ```
 
-Called with just `childIntID` the server returns the current month window. Events with `AGU`/`DGU` set reference assignments; the detail fetch is `GetCalendarAssignmentDetails`.
+Called with just `childIntID` the server returns the current month window. Mid-semester the list mixes three event kinds — school events, holidays, and gradebook assignments (`period` inside a title is the class period). `dayType` doubles as an event-kind discriminator here: `0` plain school event, `1` no-school day, `2` assignment. On assignment events `DGU`/`dguInternal` is the gradebook assignment id (equal to `Gradebook`'s `assignments[].gradebookID`) and `addLinkData` is the section `GUID` — the inputs for `GetCalendarAssignmentDetails`. Assignment `title`s already embed the score; there is no separate score field.
+
+Detail fetch: `GetCalendarAssignmentDetails`, passing the event's fields through:
+
+```json
+{"arguments":{"request":"{\"childIntID\":0,\"AGU\":\"0\",\"DGU\":\"0\",\"dguInternal\":\"0\",\"dgU2\":null,\"viewType\":\"2\",\"addLinkData\":\"<GUID>\",\"dayType\":2}"}}
+```
+→ `data.calendarAssignmentDetails`:
+```json
+{
+  "classGU": null, "assignment": null,
+  "hideStandardGraphInd": false, "hideMarksColumnElementary": false,
+  "hidePointsColumnElementary": false, "displayStandardsData": false,
+  "assignmentEventDetailLists": []
+}
+```
+
+The container comes back with `assignmentEventDetailLists: []` for past assignments; the exact input combination that populates it is still unknown.
 
 #### Documents
 
@@ -530,7 +653,9 @@ Fetch: `GetStudentDocumentContent` with `{"childIntID":0,"documentGU":"<GUID>"}`
  "gbStudentID": null, "gbTeacherID": null, "gbGradeBookID": null}
 ```
 
-The PDF is inline base64 in `base64Code` (decodes to `%PDF-…`) — no URL, no second host. Observed `documentType` values: Report Card, Test Report, Parent Letter, attendance letters, surveys. The `gb*` fields suggest gradebook attachments ride the same envelope.
+The PDF is inline base64 in `base64Code` (decodes to `%PDF-…`) — no URL, no second host. `documentType` values include: Report Card, Unofficial Transcript, Course History, Test Report, Parent Letter, attendance letters, surveys. `documentComment` carries the period label (e.g. `<School Year> Sem 1 Final Mark`). The `gb*` fields suggest gradebook attachments ride the same envelope.
+
+Note `documentFileName` is a server-side GUID-named file, not the human title — the display name comes from `documentType`/`documentComment`.
 
 #### Homework / class notes
 
@@ -549,7 +674,79 @@ The PDF is inline base64 in `base64Code` (decodes to `%PDF-…`) — no URL, no 
 ```json
 {"arguments":{"request":"{\"childIntID\":0}"}}
 ```
-→ `data.pxpMessagesData` — district/school alert messages. Replaces the SOAP `GetPXPMessages`; message attachments are fetched through the mail family below.
+→ `data.pxpMessagesData` (trimmed):
+```json
+{
+  "supportingSynergyMail": true,
+  "messageListings": [],
+  "synergyMailMessageListingByStudents": [
+    {"studentGU": "<GUID>",
+     "synergyMailMessageListings": [
+       {"attachmentDatas": [], "iconURL": "images/PXP/", "ID": null,
+        "beginDate": "MM/DD/YYYY 00:00:00", "type": 1,
+        "subject": "<Message Subject>", "content": null, "endDate": null,
+        "read": false, "deletable": true, "from": null,
+        "subjectNoHTML": "<Message Subject>",
+        "module": 7, "email": null, "staffGU": null, "smMsgPersonGU": null}
+     ]}]}
+```
+
+District/school alert messages. `messageListings` is the legacy shape (empty here); live messages arrive under `synergyMailMessageListingByStudents[]`, grouped per student. `module` identifies the emitting module (`7` = gradebook progress-report notices, `1` = attendance notes). `ID`/`from`/`content` can all be `null` for auto-generated notices. Replaces the SOAP `GetPXPMessages`; message attachments are fetched through the mail family below.
+
+#### School information
+
+```json
+{"arguments":{"request":"{\"childIntID\":0}"}}
+```
+→ `data.studentSchoolInfoListing` (trimmed):
+```json
+{
+  "school": "<School Name>", "principal": "<Principal Name>",
+  "schoolAddress": "<Street Address>", "schoolAddress2": "",
+  "schoolCity": "<City>", "schoolState": "<ST>", "schoolZip": "<ZIP>",
+  "phone": "<phone>", "phone2": "<phone>", "URL": "<school website>",
+  "principalEmail": "<principal@example.edu>", "principalGu": "<GUID>",
+  "staffLists": [
+    {"name": "<Staff Name>", "eMail": "<staff@example.edu>",
+     "title": "HS TEACHER", "phone": "", "extn": "", "staffGU": "<GUID>"}
+  ]}
+```
+
+A full staff directory — hundreds of entries at a large school, all teachers included with their `staffGU` (matching the schedule's `teacherStaffGU`). Titles are raw Synergy position codes (`HS TEACHER`, `HS SECRETARY OFFICE`, `HS SPED PARAEDUC`, …).
+
+#### My account
+
+`GetContentMyAccountData` with `{"childIntID":0}` → `data.pxpMyAccountData` — the account holder's contact/notification settings. Contains the student's name, address, phone and e-mail (all PII — handle accordingly); field groups:
+
+- identity/contact: `formattedName`, `userID` (the student id string), `homeAddress`/`mailAddreess` (*sic*, `<br>`-separated HTML), `phoneNumbers` (HTML with a `*` primary marker), `eMail`…`eMail5` plus per-address `Enabled`/`Visible` flags.
+- self-edit permissions: `canEditParentDemographicData`, `enableParent*Updates`, `firstNameUpdatePermission`, etc.
+- notification toggles: `chkNotify*` flags each paired with a `chkNotify*Enabled` flag and `showNotification*Email`/`SMS`/`Voice` variants.
+- misc: `hidePaperlessReportcard`, `paperlessReportcardSetting`, `supporting_Email_Notification_ForStudentVUE`, `adultID`.
+
+#### Acknowledgements
+
+```json
+{"arguments":{"request":"{\"childIntID\":0}"}}
+```
+→ `data.parentAcknowledgementMain`:
+```json
+{"parentAcknowledgementDatas": []}
+```
+
+Empty outside signature windows.
+
+#### Hall pass setup
+
+```json
+{"arguments":{"request":"{\"childIntID\":0}"}}
+```
+→ `data.hallPassRoomSetupXML` (a JSON object despite the name):
+```json
+{"hallPassMaxDaysForFuturePass": "NN", "hallPassCountUp": false,
+ "allowStudentsToEndHallPass": false, "hallPassRoomTypes": []}
+```
+
+Returned even where `GetHallPassData` fails with the generic `500` error; empty `hallPassRoomTypes` means the feature has no rooms configured.
 
 #### Student mail (Synergy Mail)
 
@@ -564,7 +761,13 @@ The whole mail stack is a `GetSynergyMail*` / `UpdateSynergyMail*` family (see t
   "isLastPageLoaded": false, "totalUnreadConversationMessages": 0}}
 ```
 
-Compose: `GetSynergyMailRecipientSearch` / `GetSynergyMailRecipientAddressing` → `GetSynergyMailSaveNewMessage`. Read/delete: `GetSynergyMailSaveReadOrDeleteMsg`; move: `GetSynergyMailMoveMessage`; folders: `GetSynergyMailUpdateFolder`; signatures: `GetSynergyMailUpdateSignatures`. Unread counters: `GetSynergyMailUnreadCount`, `GetSynergyMailInboxCount`. Address books: teachers come from the schedule (`GetSynergyMailGetTeacherList` returns `studentClassScheduleForAllTerms`), plus staff/student/contact/school lists.
+Compose: `GetSynergyMailRecipientSearch` / `GetSynergyMailRecipientAddressing` → `GetSynergyMailSaveNewMessage`. Read/delete: `GetSynergyMailSaveReadOrDeleteMsg`; move: `GetSynergyMailMoveMessage`; folders: `GetSynergyMailUpdateFolder`; signatures: `GetSynergyMailUpdateSignatures`. Unread counters: `GetSynergyMailUnreadCount` (→ `data.messageCount`, an int):
+
+```json
+{"error": null, "data": {"messageCount": 1}}
+```
+
+`GetSynergyMailInboxCount` and the address-book calls (`GetSynergyMailGetTeacherList`, `…GetSchoolList`, …) can return the generic `500` error even with mail enabled and unread conversations — don't assume the whole family works because `GetSynergyMailUnreadCount` does. Address books: teachers also come from the schedule (`GetSynergyMailGetTeacherList` returns `studentClassScheduleForAllTerms`).
 
 #### Hall passes and health
 
